@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>360 Panorama with AI Assistant</title>
+  <link rel="icon" type="image/png" href="img/i.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Holodomor Research and Education Consortium (HREC) is an academic and educational initiative dedicated to researching, documenting, and teaching the history of the 1932–33 Holodomor in Ukraine." />
+
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Holodomor Research and Education Consortium (HREC)" />
+<meta property="og:description" content="HREC supports research, publications, and educational resources on the 1932–33 Holodomor in Ukraine, working with scholars and institutions in Canada, Ukraine, and worldwide." />
+<meta property="og:url" content="https://ishareai.github.io/hrec/" />
+<meta property="og:image" content="https://ishareai.github.io/hrec/img/lg.png" />
+<meta property="og:site_name" content="HREC Panorama" />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Holodomor Research and Education Consortium (HREC)" />
+<meta name="twitter:description" content="Interactive 360° panorama experience dedicated to Holodomor research and education." />
+<meta name="twitter:image" content="https://ishareai.github.io/hrec/img/lg.png" />
+
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #000;
+    }
+
+    #scene-container {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+    }
+
+    .vignette-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
+      background: radial-gradient(
+        circle at center,
+        rgba(0, 0, 0, 0) 50%,
+        rgba(0, 0, 0, 0.65) 100%
+      );
+    }
+
+    .ai-button {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 30;
+      padding: 0.9rem 1.5rem;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      background: rgba(0, 0, 0, 0.75);
+      color: #fff;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .ai-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+      background: rgba(10, 132, 255, 0.9);
+    }
+
+    .ai-button:active {
+      transform: translateY(0px) scale(0.98);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    @media (max-width: 600px) {
+      .ai-button {
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        bottom: 1rem;
+        font-size: 0.95rem;
+        padding: 0.8rem 1.4rem;
+      }
+
+      .ai-button:hover {
+        transform: translateX(-50%) translateY(-1px);
+      }
+    }
+
+    #panorama-buttons {
+      position: fixed;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      padding: 0.4rem 0.6rem;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 999px;
+      backdrop-filter: blur(8px);
+    }
+
+    .pano-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 0.25rem 0.55rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+
+    .pano-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .pano-btn:active {
+      transform: translateY(0);
+    }
+
+    .assistant-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background: rgba(0, 0, 0, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .assistant-panel {
+      position: relative;
+      width: 90vw;
+      height: 80vh;
+      max-width: 960px;
+      border-radius: 1.5rem;
+      overflow: hidden;
+      background: rgba(10, 10, 10, 0.95);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .assistant-header {
+      flex: 0 0 auto;
+      padding: 0.5rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(to right, #0b84ff, #6b46ff);
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .assistant-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .assistant-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #4ade80;
+      box-shadow: 0 0 10px rgba(74, 222, 128, 0.9);
+    }
+
+    .assistant-close {
+      border: none;
+      background: transparent;
+      color: #fff;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 0 0.25rem;
+    }
+
+    .assistant-body {
+      flex: 1 1 auto;
+      background: #050509;
+    }
+
+    .assistant-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    @media (max-width: 600px) {
+      .assistant-panel {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+      }
+    }
+
+
+    .pano-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 0.25rem 0.55rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      transition: background 0.15s ease, transform 0.15s ease, color 0.15s ease;
+      outline: none;
+    }
+
+    .pano-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .pano-btn:active {
+      transform: translateY(0);
+    }
+
+    .pano-btn.active {
+      background: rgba(255, 255, 255, 0.95);
+      color: #111827;
+      transform: translateY(-1px);
+    }
+
+#logo-box {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 50;
+  padding: 0.35rem 0.8rem;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.logo-img {
+  height: 38px;
+  width: auto;
+  display: block;
+}
+
+
+
+
+
+    
+  </style>
+</head>
+<body>
+  <div id="scene-container"></div>
+  <div id="logo-box">
+  <img src="img/lg.png" alt="HREC logo" class="logo-img" />
+</div>
+
+  <div class="vignette-overlay"></div>
+
+  <button class="ai-button" id="aiButton">
+    Open AI assistant
+  </button>
+
+  <div id="panorama-buttons">
+    <button class="pano-btn" data-img="1">1</button>
+    <button class="pano-btn" data-img="2">2</button>
+    <button class="pano-btn" data-img="3">3</button>
+    <button class="pano-btn" data-img="4">4</button>
+    <button class="pano-btn" data-img="5">5</button>
+    <button class="pano-btn" data-img="6">6</button>
+    <button class="pano-btn" data-img="7">7</button>
+    <button class="pano-btn" data-img="8">8</button>
+    <button class="pano-btn" data-img="9">9</button>
+    <button class="pano-btn" data-img="10">10</button>
+    <button class="pano-btn" data-img="11">11</button>
+    <button class="pano-btn" data-img="12">12</button>
+    <button class="pano-btn" data-img="13">13</button>
+  </div>
+
+  <div class="assistant-backdrop" id="assistantBackdrop">
+    <div class="assistant-panel">
+      <div class="assistant-header">
+        <div class="assistant-title">
+          <div class="assistant-dot"></div>
+          <span>Taras: The Holodomor Bard</span>
+        </div>
+        <button class="assistant-close" id="assistantClose" aria-label="Close assistant">
+          ×
+        </button>
+      </div>
+      <div class="assistant-body">
+  <div style="
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    color: #e5e5e5;
+    font-size: 0.95rem;
+    text-align: center;
+    padding: 1.5rem;
+  ">
+    <p>
+      The assistant is opened in a separate tab for security reasons.
+    </p>
+    <a
+      href="https://lumoraintel.com/QAVNZZ0X38"
+      target="_blank"
+      rel="noopener noreferrer"
+      style="
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.8rem 1.6rem;
+        border-radius: 999px;
+        background: #0b84ff;
+        color: #fff;
+        text-decoration: none;
+        font-weight: 600;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+      "
+    >
+      Open AI assistant
+    </a>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+  <script type="module">
+  import * as THREE from './js/three.module.js';
+  import { OrbitControls } from './js/OrbitControls.js';
+
+  let scene, camera, renderer, controls;
+  let geometry, sphere, material, textureLoader;
+  let fadeSphere = null;
+  let fadeMaterial = null;
+  let isFading = false;
+  let fadeProgress = 0;
+  const fadeSpeed = 0.02;
+
+  const container = document.getElementById('scene-container');
+  const assistantBackdrop = document.getElementById('assistantBackdrop');
+  const assistantClose = document.getElementById('assistantClose');
+
+  function init() {
+    scene = new THREE.Scene();
+
+    camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+    camera.position.set(0, 0, 0.1);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    container.appendChild(renderer.domElement);
+
+    geometry = new THREE.SphereGeometry(500, 60, 40);
+    geometry.scale(-1, 1, 1);
+
+    textureLoader = new THREE.TextureLoader();
+    const startTexture = textureLoader.load('img/3.jpg', (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace;
+      render();
+    });
+
+    material = new THREE.MeshBasicMaterial({
+      map: startTexture,
+      transparent: true,
+      opacity: 1
+    });
+
+    sphere = new THREE.Mesh(geometry, material);
+    scene.add(sphere);
+
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableZoom = false;
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.rotateSpeed = 0.4;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.3;
+    controls.minPolarAngle = 0.1;
+    controls.maxPolarAngle = Math.PI - 0.1;
+
+    window.addEventListener('resize', onWindowResize);
+
+    animate();
+  }
+
+  function changePanorama(num) {
+    if (isFading) return;
+
+    const newTexture = textureLoader.load(`img/${num}.jpg`, (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace;
+    });
+
+    fadeMaterial = new THREE.MeshBasicMaterial({
+      map: newTexture,
+      transparent: true,
+      opacity: 0
+    });
+
+    fadeSphere = new THREE.Mesh(geometry, fadeMaterial);
+    scene.add(fadeSphere);
+
+    material.transparent = true;
+    material.opacity = 1;
+
+    isFading = true;
+    fadeProgress = 0;
+  }
+
+   const panoButtons = document.querySelectorAll('.pano-btn');
+
+  // set initial active button (matches your startTexture img/3.jpg)
+  const initialBtn = document.querySelector('.pano-btn[data-img="3"]');
+  if (initialBtn) {
+    initialBtn.classList.add('active');
+  }
+
+  panoButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const num = btn.getAttribute('data-img');
+
+      // change panorama
+      changePanorama(num);
+
+      // update active state
+      panoButtons.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+
+  // open assistant panel (no iframe inside JS)
+  document.getElementById('aiButton').addEventListener('click', () => {
+    assistantBackdrop.style.display = 'flex';
+  });
+
+  assistantClose.addEventListener('click', () => {
+    assistantBackdrop.style.display = 'none';
+  });
+
+  assistantBackdrop.addEventListener('click', (e) => {
+    if (e.target === assistantBackdrop) {
+      assistantBackdrop.style.display = 'none';
+    }
+  });
+
+  function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    render();
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    controls.update();
+
+    if (isFading && fadeSphere && fadeMaterial) {
+      fadeProgress += fadeSpeed;
+
+      if (fadeProgress >= 1) {
+        fadeProgress = 1;
+        isFading = false;
+
+        material.map = fadeMaterial.map;
+        material.opacity = 1;
+        material.transparent = true;
+        material.needsUpdate = true;
+
+        scene.remove(fadeSphere);
+        fadeSphere.geometry.dispose();
+        fadeMaterial.dispose();
+
+        fadeSphere = null;
+        fadeMaterial = null;
+      } else {
+        material.opacity = 1 - fadeProgress;
+        fadeMaterial.opacity = fadeProgress;
+      }
+    }
+
+    render();
+  }
+
+  function render() {
+    renderer.render(scene, camera);
+  }
+
+  init();
+</script>
+
+</body>
+</html>
