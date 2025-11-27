@@ -112,130 +112,13 @@
       width: auto;
       display: block;
     }
-
-
-    /* Скрытый элемент */
-.taras-hidden {
-  display: none;
-}
-
-/* Большая кнопка Taras AI */
-.taras-ai-button {
-  position: fixed;
-  right: 24px;
-  bottom: 24px;
-  z-index: 9999;
-
-  padding: 14px 22px;
-  border-radius: 999px;
-  border: none;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-
-  background: linear-gradient(135deg, #0052ff, #ffcc00);
-  color: #fff;
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.25);
-
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.taras-ai-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3);
-}
-
-/* Панель с ассистентом */
-.taras-ai-panel {
-  position: fixed;
-  right: 24px;
-  bottom: 90px;
-  width: 420px;
-  height: 620px;
-  max-height: calc(100vh - 120px);
-  z-index: 9998;
-
-  background: #ffffff;
-  border-radius: 18px;
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
-
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* Шапка панели */
-.taras-ai-header {
-  background: #0b2e5b;
-  color: #fff;
-  font-weight: 600;
-  padding: 10px 14px;
-
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.taras-ai-close {
-  background: transparent;
-  border: none;
-  font-size: 16px;
-  color: inherit;
-  cursor: pointer;
-}
-
-/* Тело панели */
-.taras-ai-body {
-  flex: 1;
-  overflow: hidden;
-  position: relative;
-}
-
-/* Мобильная адаптация */
-@media (max-width: 650px) {
-  .taras-ai-panel {
-    right: 8px;
-    left: 8px;
-    bottom: 80px;
-    width: auto;
-    height: 70vh;
-  }
-
-  .taras-ai-button {
-    right: 8px;
-    left: 8px;
-    justify-content: center;
-  }
-
-
-
-
-    
   </style>
 </head>
 
 <body>
-  <!-- 🔵 БОЛЬШАЯ КНОПКА TARAS AI -->
-  <button id="taras-ai-button" class="taras-ai-button">
-    🤖 Taras AI — Ask me
-  </button>
-
-  <!-- 🔵 ПАНЕЛЬ С ВИДЖЕТОМ (по умолчанию скрыта) -->
-  <div id="taras-ai-panel" class="taras-ai-panel taras-hidden">
-    <div class="taras-ai-header">
-      <span>Taras: The Holodomor Bard</span>
-      <button id="taras-ai-close" class="taras-ai-close">✕</button>
-    </div>
-
-    <div class="taras-ai-body">
-      <!-- Тут живёт твой Pickaxe / Ishare ассистент -->
-      <div id="deployment-a9d6bc90-e664-453e-95e8-326fe5161ca6"></div>
-    </div>
-  </div>
+  <!-- Новый ассистент Pickaxe -->
+  <div id="deployment-a9d6bc90-e664-453e-95e8-326fe5161ca6"></div>
+  <script src="https://studio.pickaxe.co/api/embed/bundle.js" defer></script>
 
   <!-- 360° сцена -->
   <div id="scene-container"></div>
@@ -265,10 +148,6 @@
     <button class="pano-btn" data-img="13">13</button>
   </div>
 
-  <!-- Скрипт Pickaxe (обязательно, но теперь он один) -->
-  <script src="https://studio.pickaxe.co/api/embed/bundle.js" defer></script>
-
-  <!-- Твой Three.js код -->
   <script type="module">
     import * as THREE from './js/three.module.js';
     import { OrbitControls } from './js/OrbitControls.js';
@@ -358,6 +237,7 @@
 
     const panoButtons = document.querySelectorAll('.pano-btn');
 
+    // начальная активная кнопка (панорама 3)
     const initialBtn = document.querySelector('.pano-btn[data-img="3"]');
     if (initialBtn) {
       initialBtn.classList.add('active');
@@ -367,8 +247,10 @@
       btn.addEventListener('click', () => {
         const num = btn.getAttribute('data-img');
 
+        // смена панорамы
         changePanorama(num);
 
+        // обновляем active
         panoButtons.forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
       });
@@ -419,26 +301,5 @@
 
     init();
   </script>
-
-  <!-- JS для открытия/закрытия панели Taras AI -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const btn = document.getElementById("taras-ai-button");
-      const panel = document.getElementById("taras-ai-panel");
-      const close = document.getElementById("taras-ai-close");
-
-      if (!btn || !panel || !close) return;
-
-      btn.addEventListener("click", () => {
-        panel.classList.toggle("taras-hidden");
-      });
-
-      close.addEventListener("click", () => {
-        panel.classList.add("taras-hidden");
-      });
-    });
-  </script>
 </body>
-
 </html>
-
